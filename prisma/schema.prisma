@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  orders    Order[]
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  shop        String
+  description String
+  material    String
+  dotColor    String      @default("var(--gold)")
+  svg         String      // inline SVG markup used as the product image placeholder
+  price       Int         // price in rupees (whole units, no decimals)
+  oldPrice    Int?
+  badge       String?
+  rating      Int         @default(5)
+  reviews     Int         @default(0)
+  stock       Int         @default(50)
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  user            User?       @relation(fields: [userId], references: [id])
+  userId          String?
+  email           String
+  status          String      @default("pending") // pending | paid | shipped | delivered | cancelled
+  total           Int
+  stripeSessionId String?     @unique
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  price     Int // price at time of purchase, in rupees
+}
